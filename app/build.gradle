@@ -1,0 +1,103 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 27
+    buildToolsVersion "27.0.3"
+
+    defaultConfig {
+        applicationId "com.davidchiu.snpe"
+        targetSdkVersion 27
+        minSdkVersion 21
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a"
+        }
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++11 -fopenmp"
+                abiFilters "armeabi-v7a"
+            }
+        }
+
+    }
+    externalNativeBuild {
+        cmake {
+            path 'src/main/jni/CMakeLists.txt'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+    sourceSets {
+        main {
+            //manifest.srcFile 'src/main/AndroidManifest.xml'
+            //java.srcDirs         = ['src/main/java']
+            //resources.srcDirs    = ['src/main']
+            //aidl.srcDirs         = ['src/main/aidl']
+            //renderscript.srcDirs = ['src/main']
+            //res.srcDirs          = ['src/main/res']
+            //assets.srcDirs       = ['src/main/assets']
+            //jniLibs.srcDirs  'build/'+project.ext.buildTempDir+ '/lib'
+            jniLibs.srcDirs = ['src/main/libs']
+            jni.srcDirs = [] // disable use of automatically generated Android.mk
+        }
+
+    }
+
+    flavorDimensions "model"
+    productFlavors {
+        SSDMobilenet {
+            dimension "model"
+            applicationId "com.davidchiu.snpe"
+            versionName '0.1.0'
+            buildConfigField 'String', 'model_file', '"mobilenet_ssd.dlc"'
+            buildConfigField 'String', 'config_file', '"MobileNetSSD_deploy.id.h"'
+            buildConfigField 'String', 'param_file', '"MobileNetSSD_deploy.param.bin"'
+            buildConfigField 'String', 'weights_file', '"MobileNetSSD_deploy.bin"'
+            buildConfigField 'String', 'label_file', '"coco_labels_list_ssd.txt"'
+            buildConfigField 'int', 'cropW', '300'
+            buildConfigField 'int', 'cropH', '300'
+            versionNameSuffix "-ssd"
+            resValue "string", "app_name", "SNPECam"
+            manifestPlaceholders = [screenOrientation: "vertical"]
+            //buildConfigField 'String', 'model', '"caffessd"'
+            buildConfigField 'String', 'model', '"ssdmobilenet"'
+            externalNativeBuild {
+                cmake {
+                    arguments "-DSSD=1"
+                    arguments "-DHEADER_FILE=MobileNetSSD_deploy.id.h"
+                    arguments "-DNAMESPACE=MobileNetSSD_deploy_param_id"
+                    arguments "-DNCNN_INPUT=MobileNetSSD_deploy_param_id::BLOB_data"
+                    arguments "-DNCNN_OUTPUT=MobileNetSSD_deploy_param_id::BLOB_detection_out"
+                }
+            }
+        }
+        CaffeSSD {
+            dimension "model"
+            applicationId "com.davidchiu.snpe"
+            versionName '0.1.0'
+            buildConfigField 'String', 'model_file', '"caffe_mobilenet_ssd.dlc"'
+            buildConfigField 'String', 'label_file', '"coco_labels_list_ssd.txt"'
+            buildConfigField 'int', 'cropW', '300'
+            buildConfigField 'int', 'cropH', '300'
+            versionNameSuffix "-caffessd"
+            resValue "string", "app_name", "SNPECaffeCam"
+            manifestPlaceholders = [screenOrientation: "vertical"]
+            buildConfigField 'String', 'model', '"caffessd"'
+            //buildConfigField 'String', 'model', '"ssdmobilenet"'
+            externalNativeBuild {
+                cmake {
+                    arguments "-DSSD=1"
+                }
+            }
+        }
+
+    }
+}
+
+dependencies {
+    compile(name: 'snpe-release', ext:'aar')
+}
